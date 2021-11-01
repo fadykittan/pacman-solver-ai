@@ -121,7 +121,9 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    from util import PriorityQueue
+    frontier = PriorityQueue()
+    return searchWithCostLogic(problem, frontier, heuristic)
 
 
 # Abbreviations
@@ -169,9 +171,10 @@ def searchLogic(problem, frontier):
 
 # Search with Cost logic
 # the implementation for frontier is PriorityQueue
-def searchWithCostLogic(problem, frontier):
+def searchWithCostLogic(problem, frontier, heuristic=None):
     startPoint = problem.getStartState()
     frontier.push((startPoint, None, 0), 0)
+    calculateCost = CalculateCost(problem, heuristic)
 
     visited = set()
     parentMap = {}
@@ -188,7 +191,7 @@ def searchWithCostLogic(problem, frontier):
             visited.add(node[0])
             for child in problem.getSuccessors(node[0]):
                 parentMap[child] = node
-                frontier.push(child, child[2])
+                frontier.push(child, calculateCost.getCost(child))
 
     # ==================END OF WHILE==================
 
@@ -201,3 +204,21 @@ def searchWithCostLogic(problem, frontier):
     plan.reverse()
     print(plan)
     return plan
+
+
+class CalculateCost:
+    """
+    This class holds 2 function to calculate the cost of the path.
+    f(n) = g(n) + h(n)
+    """
+
+    def __init__(self, problem, h=None):
+        self.problem = problem
+        self.h = h
+
+    def getCost(self, node):
+        g = node[2]
+        if(self.h == None):
+            return g
+        else:
+            return self.h(node[0], self.problem) + g
