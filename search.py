@@ -105,7 +105,9 @@ def breadthFirstSearch(problem):
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    from util import PriorityQueue
+    frontier = PriorityQueue()
+    return searchWithCostLogic(problem, frontier)
 
 
 def nullHeuristic(state, problem=None):
@@ -151,6 +153,42 @@ def searchLogic(problem, frontier):
             for child in problem.getSuccessors(node[0]):
                 parentMap[child] = node
                 frontier.push(child)
+
+    # ==================END OF WHILE==================
+
+    plan = []
+    current = target
+    while current[0] is not startPoint:
+        plan.append(current[1])
+        current = parentMap[current]
+
+    plan.reverse()
+    print(plan)
+    return plan
+
+
+# Search with Cost logic
+# the implementation for frontier is PriorityQueue
+def searchWithCostLogic(problem, frontier):
+    startPoint = problem.getStartState()
+    frontier.push((startPoint, None, 0), 0)
+
+    visited = set()
+    parentMap = {}
+    target = None
+
+    while not frontier.isEmpty():
+        node = frontier.pop()
+
+        if(problem.isGoalState(node[0])):
+            print("Target Found!!!")
+            target = node
+            break
+        elif node[0] not in visited:
+            visited.add(node[0])
+            for child in problem.getSuccessors(node[0]):
+                parentMap[child] = node
+                frontier.push(child, child[2])
 
     # ==================END OF WHILE==================
 
