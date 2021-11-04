@@ -312,8 +312,22 @@ class CornersProblem(search.SearchProblem):
         # Please add any code here which you would like to use
         # in initializing the problem
         "*** YOUR CODE HERE ***"
-        self.goals = [(1, top), (right, 1), (right, top)]
-        self.startPoint = (1, 1)
+        """
+        ====================
+        ===== TO_NOTE: =====
+        ====================
+
+        representing the visited corners by a binary flag in tuple.
+        the index of the flag corresponds with the index of the corner in "self.goals"
+        example 1:
+        if corners (1, top) and (right, top) are visited, then the representation will be
+        (0, 1, 0, 1)
+
+        example 2:
+        if corner (1, 1) visited, then the representation will be
+        (1, 0, 0, 0)
+        """
+        self.goals = [(1, 1), (1, top), (right, 1), (right, top)]
 
     def getStartState(self):
         """
@@ -321,14 +335,15 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        visited = (0, 0, 0, 0)
+        return (self.startingPosition, visited)
 
     def isGoalState(self, state):
         """
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return state[1] == (1, 1, 1, 1)
 
     def getSuccessors(self, state):
         """
@@ -340,17 +355,25 @@ class CornersProblem(search.SearchProblem):
             state, 'action' is the action required to get there, and 'stepCost'
             is the incremental cost of expanding to that successor
         """
-
         successors = []
-        for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
-            # Add a successor state to the successor list if the action is legal
-            # Here's a code snippet for figuring out whether a new position hits a wall:
-            #   x,y = currentPosition
-            #   dx, dy = Actions.directionToVector(action)
-            #   nextx, nexty = int(x + dx), int(y + dy)
-            #   hitsWall = self.walls[nextx][nexty]
+        currentPosition = state[0]
+        foundCorners = state[1]
 
-            "*** YOUR CODE HERE ***"
+        for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
+            x, y = currentPosition
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+            hitsWall = self.walls[nextx][nexty]
+
+            if not hitsWall:
+                if (nextx, nexty) in self.corners and (nextx, nexty) not in foundCorners:
+                    foundedGoal = (nextx, nexty)
+                    cornerIndex = getCornerIndex(self.goals, foundedGoal)
+                    visited = mergeTuple(foundCorners, cornerIndex)
+                    successors.append((((nextx, nexty), visited), action, 1))
+                else:
+                    successors.append(
+                        (((nextx, nexty), foundCorners), action, 1))
 
         self._expanded += 1  # DO NOT CHANGE
         return successors
@@ -586,3 +609,19 @@ def mazeDistance(point1, point2, gameState):
     prob = PositionSearchProblem(
         gameState, start=point1, goal=point2, warn=False, visualize=False)
     return len(search.bfs(prob))
+
+
+def mergeTuple(t1, t2):
+    return (t1[0] + t2[0], t1[1] + t2[1], t1[2] + t2[2], t1[3] + t2[3])
+
+
+def getCornerIndex(goalsList, goal):
+    index = goalsList.index(goal)
+    if index == 0:
+        return (1, 0, 0, 0)
+    elif index == 1:
+        return (0, 1, 0, 0)
+    elif index == 2:
+        return (0, 0, 1, 0)
+    elif index == 3:
+        return (0, 0, 0, 1)
